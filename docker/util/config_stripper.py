@@ -76,8 +76,9 @@ def strip_tar(input, output):
           new_diff_ids.append(new_diff_id)
         # Reverse the layer order to go back to the topmost layer to bottom as
         # required by the Docker manifest format.
-        new_layers = [l for l in reversed(new_layers)]
+        new_layers = ["blobs/" + l for l in reversed(new_layers)]
         new_diff_ids = [d for d in reversed(new_diff_ids)]
+        print("NEW LAYERS:", new_layers)
 
         # Change the manifest to reflect the new layer name
         image['Layers'] = new_layers
@@ -85,10 +86,10 @@ def strip_tar(input, output):
         config = image['Config']
         cfg_path = os.path.join(tempdir, config)
         new_cfg_path = strip_config(cfg_path, new_diff_ids)
-
+        print("NEW CONFIG:", new_cfg_path)
         # Update the name of the config in the metadata object
         # to match it's new digest.
-        image['Config'] = new_cfg_path
+        image['Config'] = "blobs/sha256/" + new_cfg_path
 
     # Rewrite the manifest with the new config names.
     with open(mf_path, 'w') as f:
@@ -208,8 +209,9 @@ def strip_layer(path):
     # Rename into correct location now that we know the hash.
     new_name = 'sha256:%s' % compressed_sha.hexdigest()
     os.rename(gz_out.name, os.path.join(original_dir, new_name))
-
-    shutil.rmtree(os.path.dirname(path))
+    print("new_name: " + os.path.join(original_dir, new_name))
+    # shutil.rmtree(os.path.dirname(path))
+    print(new_name)
     return (new_name, diffid)
 
 
